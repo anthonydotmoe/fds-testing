@@ -82,12 +82,19 @@ main:
   cpx #64
   bne :-
 
-  ; Set PPUMASK to turn on background
+  ; Set FDS to use vertical mirroring
+  lda #%00101110
+  sta $4025
 
+  ; Set PPUMASK to turn on background
+  bit PPUSTATUS
   lda #%00011110
   sta PPUMASK
 
-  sei
+  ; Set PPUCTRL to enable NMI on VBlank
+  bit PPUSTATUS
+  lda #%10011000
+  sta PPUCTRL
 
 loop:
 
