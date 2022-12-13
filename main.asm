@@ -1,6 +1,6 @@
   ; vim: set syn=650:
-  .include "inc/fds.650"
-  .include "inc/nes.650"
+  .include "inc/fds.asm"
+  .include "inc/nes.asm"
 
 YSCROLL .ezp $10
 
@@ -107,7 +107,7 @@ FDS_HOOK:
   rts
 
 nametabledata:
-  .include "nametable.650"
+  .include "nametable.asm"
 
 ; interrupt vector table
 

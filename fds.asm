@@ -107,7 +107,7 @@ FDS_Delay132 = $E149 ; 132 clock cycle delay
 
 ; File data block
   .db $04                 ; Block code (4 = file data block)
-  .include "kyodaku-.650" ; file data
+  .include "kyodaku-.asm" ; file data
 
 ; File "MAINGAME"
 ;-------------------------------------------------------------------------------
