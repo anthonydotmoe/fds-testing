@@ -6,20 +6,11 @@
 ; Header constants
 REVISION    = $00 ; revision number used in the header
 SIDE_COUNT  = $01 ; number of disk sides
-FILE_COUNT = $03 ; total number of non-hidden files on disk side 1
+FILE_COUNT = $04 ; total number of non-hidden files on disk side 1...
+                 ; for the kyodaku skip, put n+1 files in the header so the BIOS
+		 ; will keep scanning for the next file until NMI
 
-; FDS defines
-FDS_CRAM = $0000 ; where CHR-RAM starts
-FDS_PRAM = $6000 ; where PRG-RAM starts
-FDS_BIOS = $E000 ; where the FDS BIOS starts
-
-; FDS BIOS calls
-FDS_Delay132 = $E149 ; 132 clock cycle delay
-
-; Variables
-;===============================================================================
-
-; Zero Page ($0000-$00FF)
+  .include "inc/fds.asm"
 
 
 ; fwNES FDS header
@@ -50,7 +41,7 @@ FDS_Delay132 = $E149 ; 132 clock cycle delay
                           ;   $00 -- FMC ("normal card")
 		          ;   $01 -- FSC ("card with shutter")
   .db $00                 ; Unknown
-  .db $01                 ; Boot read file code (file code to load upon boot)
+  .db FILE_COUNT          ; Boot read file code (file code to load upon boot)
   .db $FF,$FF,$FF,$FF,$FF ; Unknown
   .db $00,$00,$00         ; Manufacturing date
                           ;   Stored in BCD, subtract the Shouwa starting year
@@ -108,6 +99,25 @@ MainStart:
   .incbin "main.bin" ; file data
 MainEnd:
 
+; File "CHR     "
+;-------------------------------------------------------------------------------
+; CHR data, contains a sprite
+
+; File header block
+  .db $03
+  .db $01
+  .db $01
+  .db "CHR     "
+  .dw $0000        ; Pattern Table 0
+  .dw (CHREnd - CHRStart)
+  .db $01
+
+; File data block
+  .db $04
+CHRStart:
+  .incbin "newchr.bin"
+CHREnd:
+
 ; File "BYPASS--"
 ;-------------------------------------------------------------------------------
 ; Write $90 to $2000, this sets PPUCTRL to enable interrupts while the BIOS is
@@ -116,8 +126,8 @@ MainEnd:
 
 ; File header block
   .db $03
-  .db $01
-  .db $01
+  .db $02
+  .db $02
   .db "BYPASS--"
   .dw $2000
   .dw $0001

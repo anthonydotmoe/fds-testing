@@ -5,6 +5,9 @@ FDS_CRAM = $0000
 FDS_PRAM = $6000
 FDS_BIOS = $E000
 
+; FDS Registers
+FDSCTRL = $4025
+
 ; FDS BIOS calls
 FDS_Delay132 = $E149
 
