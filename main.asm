@@ -8,6 +8,27 @@ YSCROLL .ezp $10
 
 MAINGAME_START:
 
+; the kyodaku bypass method will fire an NMI during disk load. The following
+; will be executed when that NMI fires. We need to: disable V-Sync NMIs,
+; replace the NMI3 vector with the actual NMI handler address, tell the BIOS to
+; use the reset vector at $DFFC on reset, then reset.
+BYPASS:
+  ; disable PPU NMI handling
+  lda #$00
+  sta PPUSTATUS
+  ; replace NMI 3 "bypass" vector at $DFFA
+  lda #<NMI
+  sta $DFFA
+  lda #>NMI
+  sta $DFFB
+  ; set reset handler for BIOS
+  lda #$35
+  sta $0102
+  lda #$AC
+  sta $0103
+  ; jump to FDS BIOS reset vector
+  jmp ($FFFC)
+
 IRQ:
   jsr FDS_HOOK
   rti
@@ -122,6 +143,6 @@ nametabledata:
 
   .dw NMI
   .dw NMI
-  .dw NMI
+  .dw BYPASS
   .dw RESET
   .dw IRQ

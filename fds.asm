@@ -6,7 +6,7 @@
 ; Header constants
 REVISION    = $00 ; revision number used in the header
 SIDE_COUNT  = $01 ; number of disk sides
-FILE_COUNT = $02 ; total number of non-hidden files on disk side 1
+FILE_COUNT = $03 ; total number of non-hidden files on disk side 1
 
 ; FDS defines
 FDS_CRAM = $0000 ; where CHR-RAM starts
@@ -96,36 +96,39 @@ FDS_Delay132 = $E149 ; 132 clock cycle delay
 	         ;   disk (instead of the file number). An ID smaller than the boot
 	         ;   number means the file is a boot file, and will be loaded on
 	         ;   boot.
-  .db "KYODAKU-" ; File name (8 uppercase ASCII characters)
-  .dw $2800      ; File address (16-bit little endian)
+  .db "MAIN    " ; File name (8 uppercase ASCII characters)
+  .dw FDS_PRAM   ; File address (16-bit little endian)
                  ;   The destination address when loading
-  .dw $00E0      ; File size
-  .db $02        ; File type
+  .dw (MainEnd - MainStart)      ; File size
+  .db $00        ; File type
                  ;   0: Program   (PRAM)
 	         ;   1: Character (CRAM)
 	         ;   2: Nametable (VRAM)
 
 ; File data block
-  .db $04                 ; Block code (4 = file data block)
-  .include "kyodaku-.asm" ; file data
+  .db $04            ; Block code (4 = file data block)
+MainStart:
+  .incbin "main.bin" ; file data
+MainEnd:
 
-; File "MAINGAME"
+; File "BYPASS--"
 ;-------------------------------------------------------------------------------
+; Write $90 to $2000, this sets PPUCTRL to enable interrupts while the BIOS is
+; trying to load the next file. BIOS will handle this by jumping to $DFFA (where
+; our file has loaded it's own vectors)
 
 ; File header block
   .db $03
   .db $01
   .db $01
-  .db "MAIN    "
-  .dw FDS_PRAM
-  .dw (MainEnd - MainStart)
+  .db "BYPASS--"
+  .dw $2000
+  .dw $0001
   .db $00
 
 ; File data block
-  .db $04                 ; Block code (4 = file data block)
-MainStart:
-  .incbin "main.bin"      ; file data
-MainEnd:
+  .db $04      ; Block code (4 = file data block)
+  .db $90      ; file data
 
 
 ; End of Disk Side 1
