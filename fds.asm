@@ -81,12 +81,9 @@ FDS_Delay132 = $E149 ; 132 clock cycle delay
 ; All files with IDs less than or equal to the boot read file code will be
 ; loaded by BIOS when the game is booting
 
-; File "KYODAKU-"
+; File "MAIN    "
 ;-------------------------------------------------------------------------------
-
-; The first file on the disk must be the "KYODAKU-" file. This contains the
-; message that scrolls up on the screen at boot, and must match the data stored
-; in BIOS at $ED37.
+; Main program data
 
 ; File header block
   .db $03        ; Block code (3 = file header block)
