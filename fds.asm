@@ -115,7 +115,7 @@ MainEnd:
 ; File data block
   .db $04
 CHRStart:
-  .incbin "newchr.bin"
+  .incbin "chr.bin"
 CHREnd:
 
 ; File "BYPASS--"

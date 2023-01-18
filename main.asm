@@ -23,6 +23,8 @@ BUTTONS2 .ezp $17
 ; OAM data page ($0200-$02FF)
 OAMDATA = $0200
 
+SCROLLSPEED = $04
+
   .org FDS_PRAM
 
 MAINGAME_START:
@@ -42,20 +44,55 @@ GAMEINIT:
   lda #$00      ; set YSCROLL to zero
   sta YSCROLL
 
+  lda #$7C      ; set player X/Y to middle of screen
+  sta PLAYER_X
+  sta PLAYER_Y
+
   ; clear OAMDATA
+  lda #$00
   ldx #$00
 :
-  sta $0200,x
+  sta OAMDATA,x
   inx
   bne :-
 
-  ; write a palette
+  ; set all 64 sprites y-pos to off screen
+  lda #$FF
+  ldx #$00
+  ldy #$00
+:
+  sta OAMDATA,x
+  inx
+  inx
+  inx
+  inx
+  iny
+  cpy #64
+  bne :-
+
+
+  ; write bg palette
 
   bit PPUSTATUS
   ldx #$3F      ; load $3F00 to PPUADDR
   stx PPUADDR
   ldx #$00
   stx PPUADDR
+:
+  lda MARIOPALETTE,X
+  sta PPUDATA
+  inx
+  cpx #$04
+  bcc :-
+
+  ; write sprite palette
+
+  bit PPUSTATUS
+  ldx #$3F      ; load $3F00 to PPUADDR
+  stx PPUADDR
+  ldx #$11
+  stx PPUADDR
+  ldx #$01
 :
   lda MARIOPALETTE,X
   sta PPUDATA
@@ -74,7 +111,7 @@ GAMEINIT:
 
   ; Set PPUCTRL to enable NMI on VBlank
   bit PPUSTATUS
-  lda #%10011000
+  lda #%10010000
   sta PPUCTRL
 
 main:
@@ -91,13 +128,37 @@ main:
   and #BUTTON_UP
   beq :+
   ; up pressed
-  inc YSCROLL
+  lda YSCROLL
+  clc
+  adc #SCROLLSPEED
+  sta YSCROLL
 : 
   lda BUTTONS1
   and #BUTTON_DOWN
   beq :+
   ; down pressed
-  dec YSCROLL
+  lda YSCROLL
+  sec
+  sbc #SCROLLSPEED
+  sta YSCROLL
+:
+  lda BUTTONS1
+  and #BUTTON_LEFT
+  beq :+
+  ; left pressed
+  lda PLAYER_X
+  sec
+  sbc #SCROLLSPEED
+  sta PLAYER_X
+:
+  lda BUTTONS1
+  and #BUTTON_RIGHT
+  beq :+
+  ; right pressed
+  lda PLAYER_X
+  clc
+  adc #SCROLLSPEED
+  sta PLAYER_X
 :
 
 maindone:
@@ -142,6 +203,76 @@ NMI:
   txa
   pha
 
+;  lda FRAMERDY
+;  cmp #$01
+;  beq EndNMI
+
+DrawPlayer:
+
+SPRITE1      = OAMDATA + $04
+SPRITE1_Y    = SPRITE1 + $00
+SPRITE1_TILE = SPRITE1 + $01
+SPRITE1_PAL  = SPRITE1 + $02
+SPRITE1_X    = SPRITE1 + $03
+
+SPRITE2      = OAMDATA + $08
+SPRITE2_Y    = SPRITE2 + $00
+SPRITE2_TILE = SPRITE2 + $01
+SPRITE2_PAL  = SPRITE2 + $02
+SPRITE2_X    = SPRITE2 + $03
+
+SPRITE3      = OAMDATA + $0C
+SPRITE3_Y    = SPRITE3 + $00
+SPRITE3_TILE = SPRITE3 + $01
+SPRITE3_PAL  = SPRITE3 + $02
+SPRITE3_X    = SPRITE3 + $03
+
+SPRITE4      = OAMDATA + $10
+SPRITE4_Y    = SPRITE4 + $00
+SPRITE4_TILE = SPRITE4 + $01
+SPRITE4_PAL  = SPRITE4 + $02
+SPRITE4_X    = SPRITE4 + $03
+  ; put sprite on screen, there's probably a better way to do this
+  ; top left
+  lda PLAYER_X
+  sta SPRITE1_X
+  lda PLAYER_Y
+  sta SPRITE1_Y
+  lda #$00
+  sta SPRITE1_TILE
+
+  ; top right
+  lda PLAYER_X
+  clc
+  adc #$08
+  sta SPRITE2_X
+  lda PLAYER_Y
+  sta SPRITE2_Y
+  lda #$01
+  sta SPRITE2_TILE
+
+  ; bottom left
+  lda PLAYER_X
+  sta SPRITE3_X
+  lda PLAYER_Y
+  clc
+  adc #$08
+  sta SPRITE3_Y
+  lda #$10
+  sta SPRITE3_TILE
+
+  ; bottom right
+  lda PLAYER_X
+  clc
+  adc #$08
+  sta SPRITE4_X
+  lda PLAYER_Y
+  clc
+  adc #$08
+  sta SPRITE4_Y
+  lda #$11
+  sta SPRITE4_TILE
+
   ; Copy memory from $0200-$02FF to OAM
   lda #$00     ; write to address $00 of OAM
   sta OAMADDR
@@ -159,6 +290,7 @@ NMI:
   lda #$01
   sta FRAMERDY
 
+EndNMI:
   ; restore a and x
   pla
   tax

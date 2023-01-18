@@ -1,3 +1,4 @@
 *.bin
+!chr.bin
 *.lst
 *.dbg
