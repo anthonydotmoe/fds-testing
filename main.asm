@@ -36,6 +36,10 @@ MAINGAME_START:
 MARIOPALETTE:
   .db $23, $16, $36, $0F
 
+; "    ANTHONY.MOE     "
+TEXTDATA:
+  .db $24, $24, $24, $24, $0A, $17, $1D, $11, $18, $17, $22, $26, $16, $18, $0E, $24, $24, $24, $24, $24
+
 
 ;===============================================================================
 ; Main loop
@@ -99,6 +103,21 @@ GAMEINIT:
   inx
   cpx #$03
   bcc :-
+
+  ; write message on the screen
+  bit PPUSTATUS
+  ldx #$21
+  stx PPUADDR
+  ldx #$A6
+  stx PPUADDR
+  ldx #$00
+:
+  lda TEXTDATA,x
+  sta PPUDATA
+  inx
+  cpx #20
+  bcc :-
+
 
   ; Set FDS to use vertical mirroring
   lda #%00100110
@@ -203,9 +222,9 @@ NMI:
   txa
   pha
 
-;  lda FRAMERDY
-;  cmp #$01
-;  beq EndNMI
+  lda FRAMERDY
+  cmp #$01
+  beq EndNMI
 
 DrawPlayer:
 
